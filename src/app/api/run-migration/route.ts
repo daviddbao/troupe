@@ -1,37 +1,36 @@
 import { NextResponse } from 'next/server'
 import { Client } from 'pg'
 
-async function tryConnect(config: object) {
-  const client = new Client({ ...config, ssl: { rejectUnauthorized: false } })
-  await client.connect()
-  return client
-}
-
 export async function GET() {
-  // Try multiple connection options
+  const errors: string[] = []
+
+  // Try DATABASE_URL env var first, then fallbacks
   const configs = [
-    // Session mode pooler
-    { host: 'aws-0-us-west-1.pooler.supabase.com', port: 5432, database: 'postgres', user: 'postgres.gnaodiflszwgkfxgidho', password: '4Supasecretproject!' },
-    // Transaction mode pooler
-    { host: 'aws-0-us-west-1.pooler.supabase.com', port: 6543, database: 'postgres', user: 'postgres.gnaodiflszwgkfxgidho', password: '4Supasecretproject!' },
-    // Direct DB
-    { host: 'db.gnaodiflszwgkfxgidho.supabase.co', port: 5432, database: 'postgres', user: 'postgres', password: '4Supasecretproject!' },
+    // From Vercel env
+    { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } },
+    // Session pooler
+    { host: 'aws-0-us-west-1.pooler.supabase.com', port: 5432, database: 'postgres', user: 'postgres.gnaodiflszwgkfxgidho', password: '4Supasecretproject!', ssl: { rejectUnauthorized: false } },
+    // Transaction pooler  
+    { host: 'aws-0-us-west-1.pooler.supabase.com', port: 6543, database: 'postgres', user: 'postgres.gnaodiflszwgkfxgidho', password: '4Supasecretproject!', ssl: { rejectUnauthorized: false } },
   ]
 
-  let client = null
+  let client: Client | null = null
   let connectedVia = ''
+
   for (const [i, cfg] of configs.entries()) {
+    const c = new Client(cfg)
     try {
-      client = await tryConnect(cfg)
-      connectedVia = `option${i}`
+      await c.connect()
+      client = c
+      connectedVia = `config_${i}`
       break
-    } catch {
-      // try next
+    } catch (err) {
+      errors.push(`config_${i}: ${String(err)}`)
     }
   }
 
   if (!client) {
-    return NextResponse.json({ success: false, error: 'Could not connect to database with any config' }, { status: 500 })
+    return NextResponse.json({ success: false, errors }, { status: 500 })
   }
 
   try {
