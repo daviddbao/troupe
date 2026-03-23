@@ -4,30 +4,31 @@ import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft } from 'lucide-react'
 import ItineraryView from '@/components/itinerary/ItineraryView'
 
-export default async function ItineraryPage({ params }: { params: { id: string } }) {
+export default async function ItineraryPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: trip } = await supabase
-    .from('trips').select('*').eq('id', params.id).single()
+    .from('trips').select('*').eq('id', id).single()
   if (!trip) notFound()
 
   const { data: membership } = await supabase
-    .from('trip_members').select('role').eq('trip_id', params.id).eq('user_id', user.id).single()
+    .from('trip_members').select('role').eq('trip_id', id).eq('user_id', user.id).single()
   if (!membership) redirect('/dashboard')
 
   const { data: items } = await supabase
     .from('itinerary_items')
     .select('*')
-    .eq('trip_id', params.id)
+    .eq('trip_id', id)
     .order('day_index', { ascending: true })
     .order('start_time', { ascending: true })
 
   return (
     <div className="min-h-screen bg-stone-50">
       <nav className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
-        <Link href={`/trips/${params.id}`} className="text-stone-400 hover:text-stone-900 transition">
+        <Link href={`/trips/${id}`} className="text-stone-400 hover:text-stone-900 transition">
           <ArrowLeft size={20} />
         </Link>
         <div>
@@ -47,7 +48,7 @@ export default async function ItineraryPage({ params }: { params: { id: string }
         </div>
 
         <ItineraryView
-          tripId={params.id}
+          tripId={id}
           userId={user.id}
           items={items ?? []}
           startDate={trip.start_date}

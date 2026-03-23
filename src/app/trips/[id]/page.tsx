@@ -3,28 +3,29 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Calendar, Map, Users, ArrowLeft, CheckCircle2 } from 'lucide-react'
 
-export default async function TripPage({ params }: { params: { id: string } }) {
+export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: trip } = await supabase
-    .from('trips').select('*').eq('id', params.id).single()
+    .from('trips').select('*').eq('id', id).single()
   if (!trip) notFound()
 
   const { data: membership } = await supabase
-    .from('trip_members').select('role').eq('trip_id', params.id).eq('user_id', user.id).single()
+    .from('trip_members').select('role').eq('trip_id', id).eq('user_id', user.id).single()
   if (!membership) redirect('/dashboard')
 
   const { data: members } = await supabase
     .from('trip_members')
     .select('*, profile:profiles(full_name, avatar_url)')
-    .eq('trip_id', params.id)
+    .eq('trip_id', id)
 
   const { data: availBlocks } = await supabase
     .from('availability_blocks')
     .select('*')
-    .eq('trip_id', params.id)
+    .eq('trip_id', id)
 
   const memberCount = members?.length ?? 0
   const respondedCount = new Set(availBlocks?.map(b => b.user_id) ?? []).size
@@ -48,7 +49,7 @@ export default async function TripPage({ params }: { params: { id: string } }) {
               'bg-stone-100 text-stone-500'
             }`}>{trip.status}</span>
             {membership.role === 'organizer' && (
-              <span className="text-xs text-stone-400">You're the organizer</span>
+              <span className="text-xs text-stone-400">You&apos;re the organizer</span>
             )}
           </div>
           <h2 className="text-3xl font-bold">{trip.name}</h2>
@@ -97,7 +98,7 @@ export default async function TripPage({ params }: { params: { id: string } }) {
             {availBlocks?.some(b => b.user_id === user.id) ? (
               <p className="text-sm font-semibold text-green-600">Availability added ✓</p>
             ) : (
-              <p className="text-sm text-amber-600 font-medium">Haven't added availability yet</p>
+              <p className="text-sm text-amber-600 font-medium">Haven&apos;t added availability yet</p>
             )}
           </div>
         </div>
@@ -111,7 +112,7 @@ export default async function TripPage({ params }: { params: { id: string } }) {
             <Calendar size={24} className="text-stone-400 mb-3" />
             <h3 className="font-semibold">Availability</h3>
             <p className="text-sm text-stone-500 mt-1">
-              Mark when you're free, see group windows
+              Mark when you&apos;re free, see group windows
             </p>
           </Link>
 

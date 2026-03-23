@@ -1,5 +1,5 @@
 import { AvailabilityBlock } from './types'
-import { eachDayOfInterval, format, parseISO, isWithinInterval } from 'date-fns'
+import { eachDayOfInterval, format, parseISO } from 'date-fns'
 
 export interface AvailabilityWindow {
   start: string

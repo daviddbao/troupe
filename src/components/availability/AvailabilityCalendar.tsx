@@ -2,13 +2,13 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { AvailabilityBlock, AvailabilityType } from '@/lib/types'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameMonth, isToday, parseISO, isWithinInterval } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday } from 'date-fns'
 
 interface Props {
   tripId: string
   userId: string
   existingBlocks: AvailabilityBlock[]
-  members: any[]
+  members: unknown[]
 }
 
 const TYPE_COLORS: Record<AvailabilityType, string> = {
@@ -17,7 +17,7 @@ const TYPE_COLORS: Record<AvailabilityType, string> = {
   unavailable: 'bg-red-100 text-red-400 line-through',
 }
 
-export default function AvailabilityCalendar({ tripId, userId, existingBlocks, members }: Props) {
+export default function AvailabilityCalendar({ tripId, userId, existingBlocks }: Props) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [blocks, setBlocks] = useState<AvailabilityBlock[]>(existingBlocks)
   const [selectedType, setSelectedType] = useState<AvailabilityType>('available')

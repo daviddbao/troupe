@@ -5,36 +5,37 @@ import { ArrowLeft } from 'lucide-react'
 import { findOverlapWindows } from '@/lib/availability'
 import AvailabilityCalendar from '@/components/availability/AvailabilityCalendar'
 
-export default async function AvailabilityPage({ params }: { params: { id: string } }) {
+export default async function AvailabilityPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: trip } = await supabase
-    .from('trips').select('*').eq('id', params.id).single()
+    .from('trips').select('*').eq('id', id).single()
   if (!trip) notFound()
 
   const { data: membership } = await supabase
-    .from('trip_members').select('role').eq('trip_id', params.id).eq('user_id', user.id).single()
+    .from('trip_members').select('role').eq('trip_id', id).eq('user_id', user.id).single()
   if (!membership) redirect('/dashboard')
 
   const { data: members } = await supabase
     .from('trip_members')
     .select('user_id, profile:profiles(full_name)')
-    .eq('trip_id', params.id)
+    .eq('trip_id', id)
 
   const { data: blocks } = await supabase
     .from('availability_blocks')
     .select('*')
-    .eq('trip_id', params.id)
+    .eq('trip_id', id)
 
-  const memberIds = (members ?? []).map((m: any) => m.user_id)
+  const memberIds = (members ?? []).map((m) => m.user_id)
   const windows = findOverlapWindows(blocks ?? [], memberIds)
 
   return (
     <div className="min-h-screen bg-stone-50">
       <nav className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
-        <Link href={`/trips/${params.id}`} className="text-stone-400 hover:text-stone-900 transition">
+        <Link href={`/trips/${id}`} className="text-stone-400 hover:text-stone-900 transition">
           <ArrowLeft size={20} />
         </Link>
         <div>
@@ -47,7 +48,7 @@ export default async function AvailabilityPage({ params }: { params: { id: strin
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-1">When can everyone go?</h2>
           <p className="text-stone-500 text-sm">
-            Mark your available dates. Once everyone responds, we'll show the best windows.
+            Mark your available dates. Once everyone responds, we&apos;ll show the best windows.
           </p>
         </div>
 
@@ -74,7 +75,7 @@ export default async function AvailabilityPage({ params }: { params: { id: strin
 
         {/* Calendar component (client) */}
         <AvailabilityCalendar
-          tripId={params.id}
+          tripId={id}
           userId={user.id}
           existingBlocks={blocks ?? []}
           members={members ?? []}

@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from "@/lib/supabase/server"
 import { Trip } from '@/lib/types'
-import { MapPin, Plus, Users } from 'lucide-react'
+import { MapPin, Plus } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -22,7 +22,8 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
-  const trips = (memberships ?? []).map((m: any) => ({
+  const trips = (memberships ?? []).map((m: {trip_id: string; role: string; trips: Trip | Trip[] | null}) => ({
+
     ...m.trips as Trip,
     myRole: m.role
   }))
