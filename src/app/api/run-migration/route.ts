@@ -6,7 +6,7 @@ export async function GET() {
 
   // Try DATABASE_URL env var first, then fallbacks
   const configs = [
-    // From Vercel env
+    // From Vercel/Supabase integration env
     { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } },
     // Session pooler
     { host: 'aws-0-us-west-1.pooler.supabase.com', port: 5432, database: 'postgres', user: 'postgres.gnaodiflszwgkfxgidho', password: '4Supasecretproject!', ssl: { rejectUnauthorized: false } },
