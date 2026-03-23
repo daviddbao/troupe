@@ -25,7 +25,7 @@ export async function GET() {
       client = await tryConnect(cfg)
       connectedVia = `option${i}`
       break
-    } catch (_e) {
+    } catch {
       // try next
     }
   }
