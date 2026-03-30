@@ -20,7 +20,7 @@ export default async function DashboardPage() {
     .from('trip_members')
     .select('trip_id, role, trips(*)')
     .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+    .order('joined_at', { ascending: false })
 
   const trips = (memberships ?? []).map((m: {trip_id: string; role: string; trips: Trip | Trip[] | null}) => ({
 
