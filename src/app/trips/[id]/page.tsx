@@ -41,6 +41,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
 
   const memberCount = members?.length ?? 0
   const respondedCount = new Set(availBlocks?.map(b => b.user_id) ?? []).size
+  const userHasAvailability = availBlocks?.some(b => b.user_id === user.id) ?? false
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -51,7 +52,24 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
         <h1 className="text-xl font-bold tracking-tight">Troupe</h1>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-6 py-10">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+
+        {/* Availability CTA banner — only if user hasn't added availability */}
+        {!userHasAvailability && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-semibold text-amber-800 text-sm">📅 Step 1: Add your availability</p>
+              <p className="text-xs text-amber-600 mt-0.5">Let the group know when you&apos;re free so we can find the best dates.</p>
+            </div>
+            <Link
+              href={`/trips/${id}/availability`}
+              className="shrink-0 bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition"
+            >
+              Add availability →
+            </Link>
+          </div>
+        )}
+
         {/* Trip header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -107,7 +125,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
             <div className="flex items-center gap-2 text-stone-400 mb-1">
               <CheckCircle2 size={14} /> <span className="text-xs uppercase tracking-wide">Your status</span>
             </div>
-            {availBlocks?.some(b => b.user_id === user.id) ? (
+            {userHasAvailability ? (
               <p className="text-sm font-semibold text-green-600">Availability added ✓</p>
             ) : (
               <p className="text-sm text-amber-600 font-medium">Haven&apos;t added availability yet</p>
