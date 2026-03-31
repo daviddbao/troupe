@@ -15,9 +15,9 @@ interface Props {
 
 // US holiday long weekends only — shown for America/* timezones
 const HOLIDAY_CHIPS = [
-  { label: '❄️ Christmas wknd',  dates: ['2025-12-24','2025-12-25','2025-12-26','2025-12-27','2025-12-28'], desc: 'Dec 24-28' },
-  { label: '✨ New Years wknd',   dates: ['2025-12-31','2026-01-01','2026-01-02','2026-01-03'],              desc: 'Dec 31-Jan 3' },
-  { label: '✊ MLK wknd',         dates: ['2026-01-17','2026-01-18','2026-01-19'],                           desc: 'Jan 17-19' },
+  { label: '🎄 Christmas Weekend',  dates: ['2025-12-24','2025-12-25','2025-12-26','2025-12-27','2025-12-28'], desc: 'Dec 24-28' },
+  { label: '🎆 New Years Weekend',   dates: ['2025-12-31','2026-01-01','2026-01-02','2026-01-03'],              desc: 'Dec 31-Jan 3' },
+  { label: '🗓️ MLK Weekend',         dates: ['2026-01-17','2026-01-18','2026-01-19'],                           desc: 'Jan 17-19' },
   { label: '🇺🇸 Memorial Day', dates: ['2026-05-23','2026-05-24','2026-05-25'],                 desc: 'May 23-25' },
   { label: '🎆 4th of July',  dates: ['2026-07-03','2026-07-04','2026-07-05','2026-07-06'],              desc: 'Jul 3-6' },
   { label: '👷 Labor Day',    dates: ['2026-09-05','2026-09-06','2026-09-07'],                           desc: 'Sep 5-7' },
