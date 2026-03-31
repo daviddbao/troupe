@@ -32,6 +32,8 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
   const memberIds = (members ?? []).map((m) => m.user_id)
   const windows = findOverlapWindows(blocks ?? [], memberIds)
 
+  const userHasBlocks = (blocks ?? []).some(b => b.user_id === user.id)
+
   return (
     <div className="min-h-screen bg-stone-50">
       <nav className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
@@ -44,7 +46,7 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-6 py-10">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-1">When can everyone go?</h2>
           <p className="text-stone-500 text-sm">
@@ -61,7 +63,7 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
                 <div key={i} className="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-green-100">
                   <span className="text-sm font-medium">
                     {new Date(w.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    {n' — '}
+                    {' — '}
                     {new Date(w.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                   <span className="text-xs text-green-600 font-medium">
@@ -70,6 +72,13 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* First-time empty state hint */}
+        {!userHasBlocks && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4 text-sm text-blue-700">
+            👋 Tap a start date, then an end date to mark a range. Switch between <strong>Available</strong> / <strong>Busy</strong> using the toggle below.
           </div>
         )}
 
