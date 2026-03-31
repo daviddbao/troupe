@@ -52,8 +52,8 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
           </p>
         </div>
 
-        {/* Overlap windows */}
-        {windows.length > 0 && (
+        {/* Overlap windows — only meaningful with 2+ members */}
+        {windows.length > 0 && memberIds.length > 1 && (
           <div className="bg-green-50 border border-green-200 rounded-2xl p-6 mb-8">
             <h3 className="font-semibold text-green-800 mb-3">✨ Overlap windows found</h3>
             <div className="space-y-2">
