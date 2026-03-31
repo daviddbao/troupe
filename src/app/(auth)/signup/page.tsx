@@ -1,11 +1,15 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { Suspense } from 'react'
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const inviteCode = searchParams.get('invite')
+
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,13 +25,22 @@ export default function SignupPage() {
       email, password,
       options: { data: { full_name: fullName } }
     })
-    if (error) { setError(error.message); setLoading(false) }
-    else router.push('/dashboard')
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+    } else if (inviteCode) {
+      router.push(`/join/${inviteCode}`)
+    } else {
+      router.push('/trips/new')
+    }
   }
 
   return (
     <form onSubmit={handleSignup} className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8 space-y-4">
-      <h2 className="text-xl font-semibold">Create account</h2>
+      <div className="text-center mb-2">
+        <h2 className="text-xl font-bold">Create your account</h2>
+        {inviteCode && <p className="text-sm text-stone-500 mt-1">You&apos;ll be added to the trip after signing up.</p>}
+      </div>
       {error && <p className="text-red-500 text-sm">{error}</p>}
       <div>
         <label className="block text-sm font-medium mb-1">Full name</label>
@@ -60,8 +73,17 @@ export default function SignupPage() {
         {loading ? 'Creating account...' : 'Create account'}
       </button>
       <p className="text-center text-sm text-stone-500">
-        Have an account? <Link href="/login" className="text-stone-900 font-medium hover:underline">Sign in</Link>
+        Have an account?{' '}
+        <Link href={inviteCode ? `/login?invite=${inviteCode}` : '/login'} className="text-stone-900 font-medium hover:underline">Sign in</Link>
       </p>
     </form>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   )
 }

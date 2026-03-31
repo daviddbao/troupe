@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Calendar, Map, Users, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import InviteSection from '@/components/trips/InviteSection'
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -26,6 +27,17 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
     .from('availability_blocks')
     .select('*')
     .eq('trip_id', id)
+
+  // Fetch existing valid invite
+  const { data: existingInvite } = await supabase
+    .from('trip_invites')
+    .select('invite_code')
+    .eq('trip_id', id)
+    .gt('expires_at', new Date().toISOString())
+    .lt('use_count', 50)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
 
   const memberCount = members?.length ?? 0
   const respondedCount = new Set(availBlocks?.map(b => b.user_id) ?? []).size
@@ -127,6 +139,12 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
             </p>
           </Link>
         </div>
+
+        {/* Invite section */}
+        <InviteSection
+          tripId={trip.id}
+          initialCode={existingInvite?.invite_code ?? null}
+        />
       </main>
     </div>
   )
