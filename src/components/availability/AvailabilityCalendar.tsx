@@ -38,6 +38,7 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
   const [hoverDate, setHoverDate] = useState<Date | null>(null)
   const [saving, setSaving] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
+  const [tooltipDate, setTooltipDate] = useState<Date | null>(null)
   const showChips = isUSTimezone()
 
   const myBlocks = blocks.filter(b => b.user_id === userId)
@@ -128,7 +129,7 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
                   onClick={() => { if (!added) handleChip(chip.dates) }}
                   disabled={saving || added}
                   className={[
-                    'flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm border transition',
+                    'flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm border transition min-w-0',
                     added
                       ? 'bg-green-50 border-green-200 text-green-700 cursor-default'
                       : 'bg-white border-stone-200 text-stone-700 hover:border-stone-400 hover:shadow-sm',
@@ -149,7 +150,7 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
       <div className="bg-white border border-stone-200 rounded-2xl p-6">
 
         {/* Mode toggle */}
-        <div className="flex items-center gap-3 mb-6 flex-wrap">
+        <div className="flex items-center gap-3 mb-6 flex-wrap gap-y-2">
           <span className="text-xs text-stone-500 font-medium">Marking:</span>
           <div className="flex rounded-lg border border-stone-200 overflow-hidden text-sm">
             <button
@@ -193,7 +194,7 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
         </div>
 
         {/* Days grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 overflow-visible">
           {Array.from({ length: startPad }).map((_, i) => <div key={'pad' + i} />)}
           {days.map(day => {
             const status = getStatus(day)
@@ -206,21 +207,33 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
             if (inPreview && !status) bg = mode === 'available' ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-400'
 
             return (
-              <button
-                key={day.toISOString()}
-                type="button"
-                onClick={() => handleDateClick(day)}
-                onMouseEnter={() => { if (rangeStart) setHoverDate(day) }}
-                onMouseLeave={() => { if (rangeStart) setHoverDate(null) }}
-                className={[
-                  'aspect-square rounded-lg text-sm flex items-center justify-center transition',
-                  isToday(day) ? 'ring-2 ring-stone-300' : '',
-                  isStart ? 'ring-2 ring-blue-400' : '',
-                  bg
-                ].join(' ')}
-              >
-                {format(day, 'd')}
-              </button>
+              <div key={day.toISOString()} className="relative overflow-visible">
+                {tooltipDate && isSameDay(day, tooltipDate) && status !== null && !rangeStart && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-20 bg-stone-800 text-white text-xs rounded-lg px-2 py-1 whitespace-nowrap shadow-lg pointer-events-none">
+                    Click to remove
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleDateClick(day)}
+                  onMouseEnter={() => {
+                    if (rangeStart) setHoverDate(day)
+                    if (status !== null && !rangeStart) setTooltipDate(day)
+                  }}
+                  onMouseLeave={() => {
+                    if (rangeStart) setHoverDate(null)
+                    setTooltipDate(null)
+                  }}
+                  className={[
+                    'min-h-[2.5rem] w-full rounded-lg text-sm flex items-center justify-center transition',
+                    isToday(day) ? 'ring-2 ring-stone-300' : '',
+                    isStart ? 'ring-2 ring-blue-400' : '',
+                    bg
+                  ].join(' ')}
+                >
+                  {format(day, 'd')}
+                </button>
+              </div>
             )
           })}
         </div>
@@ -240,6 +253,27 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
           </div>
         </div>
       </div>
+
+
+      {/* Clear all my dates */}
+      {myBlocks.length > 0 && (
+        <div className="text-center mt-2">
+          <button
+            type="button"
+            onClick={async () => {
+              if (!window.confirm('Remove all your availability for this trip?')) return
+              setSaving(true)
+              const supabase = createClient()
+              await supabase.from('availability_blocks').delete().eq('trip_id', tripId).eq('user_id', userId)
+              setBlocks(prev => prev.filter(b => b.user_id !== userId))
+              setSaving(false)
+            }}
+            className="text-xs text-stone-400 hover:text-red-500 transition underline"
+          >
+            Clear all my dates
+          </button>
+        </div>
+      )}
 
       {/* Post-save CTA */}
       {justSaved && (
