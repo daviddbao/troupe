@@ -53,7 +53,7 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
         </div>
 
         {/* Overlap windows — only meaningful with 2+ members */}
-        {windows.length > 0 && memberIds.length > 1 && (
+        {windows.length > 0 && memberIds.length >= 2 && (
           <div className="bg-green-50 border border-green-200 rounded-2xl p-6 mb-8">
             <h3 className="font-semibold text-green-800 mb-3">✨ Overlap windows found</h3>
             <div className="space-y-2">
@@ -61,7 +61,7 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
                 <div key={i} className="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-green-100">
                   <span className="text-sm font-medium">
                     {new Date(w.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    {' — '}
+                    {n' — '}
                     {new Date(w.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                   <span className="text-xs text-green-600 font-medium">
