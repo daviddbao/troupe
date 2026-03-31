@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from "@/lib/supabase/server"
 import { Trip } from '@/lib/types'
-import { MapPin, Plus } from 'lucide-react'
+import { MapPin, Plus, Settings } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -23,7 +23,6 @@ export default async function DashboardPage() {
     .order('joined_at', { ascending: false })
 
   const trips = (memberships ?? []).map((m: {trip_id: string; role: string; trips: Trip | Trip[] | null}) => ({
-
     ...m.trips as Trip,
     myRole: m.role
   }))
@@ -37,13 +36,13 @@ export default async function DashboardPage() {
         <h1 className="text-xl font-bold tracking-tight">Troupe</h1>
         <div className="flex items-center gap-4">
           <span className="text-sm text-stone-500">{profile?.full_name ?? user.email}</span>
-          <form action="/api/auth/signout" method="POST">
-            <button className="text-sm text-stone-500 hover:text-stone-900 transition">Sign out</button>
-          </form>
+          <Link href="/account" className="text-stone-400 hover:text-stone-900 transition">
+            <Settings size={18} />
+          </Link>
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-6 py-10">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
