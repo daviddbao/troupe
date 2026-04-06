@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Calendar, Map, Users, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { Calendar, Map, Users, ArrowLeft, CheckCircle2, SlidersHorizontal } from 'lucide-react'
 import InviteSection from '@/components/trips/InviteSection'
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
@@ -54,22 +54,6 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
 
-        {/* Availability CTA banner — only if user hasn't added availability */}
-        {!userHasAvailability && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <p className="font-semibold text-amber-800 text-sm">📅 Step 1: Add your availability</p>
-              <p className="text-xs text-amber-600 mt-0.5">Let the group know when you&apos;re free so we can find the best dates.</p>
-            </div>
-            <Link
-              href={`/trips/${id}/availability`}
-              className="shrink-0 bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition"
-            >
-              Add availability →
-            </Link>
-          </div>
-        )}
-
         {/* Trip header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -94,10 +78,10 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
         </div>
 
         {/* Status cards */}
-        <div className="grid sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid sm:grid-cols-2 gap-4 mb-8">
           <div className="bg-white border border-stone-200 rounded-2xl p-5">
             <div className="flex items-center gap-2 text-stone-400 mb-1">
-              <Users size={14} /> <span className="text-xs uppercase tracking-wide">Members</span>
+              <Users size={14} /> <span className="text-xs uppercase tracking-wide">Members & Availability</span>
             </div>
             <p className="text-2xl font-semibold">{memberCount}</p>
             <p className="text-xs text-stone-400 mt-1">{respondedCount} have added availability</p>
@@ -120,21 +104,10 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
               <p className="text-stone-400 text-sm">TBD — add availability to find windows</p>
             )}
           </div>
-
-          <div className="bg-white border border-stone-200 rounded-2xl p-5">
-            <div className="flex items-center gap-2 text-stone-400 mb-1">
-              <CheckCircle2 size={14} /> <span className="text-xs uppercase tracking-wide">Your status</span>
-            </div>
-            {userHasAvailability ? (
-              <p className="text-sm font-semibold text-green-600">Availability added ✓</p>
-            ) : (
-              <p className="text-sm text-amber-600 font-medium">Haven&apos;t added availability yet</p>
-            )}
-          </div>
         </div>
 
         {/* Actions */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-3 gap-4 mb-8">
           <Link
             href={`/trips/${trip.id}/availability`}
             className="bg-white border border-stone-200 rounded-2xl p-6 hover:border-stone-400 hover:shadow-sm transition group"
@@ -143,6 +116,17 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
             <h3 className="font-semibold">Availability</h3>
             <p className="text-sm text-stone-500 mt-1">
               Mark when you&apos;re free, see group windows
+            </p>
+          </Link>
+
+          <Link
+            href={`/trips/${trip.id}/preferences`}
+            className="bg-white border border-stone-200 rounded-2xl p-6 hover:border-stone-400 hover:shadow-sm transition group"
+          >
+            <SlidersHorizontal size={24} className="text-stone-400 mb-3" />
+            <h3 className="font-semibold">Preferences</h3>
+            <p className="text-sm text-stone-500 mt-1">
+              Set trip length, budget, and vibe
             </p>
           </Link>
 
