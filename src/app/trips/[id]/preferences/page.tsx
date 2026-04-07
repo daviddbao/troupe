@@ -1,7 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft } from 'lucide-react'
+import TroupeHeader from '@/components/layout/TroupeHeader'
 import PreferencesForm from '@/components/PreferencesForm'
 
 export default async function PreferencesPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,12 +19,12 @@ export default async function PreferencesPage({ params }: { params: Promise<{ id
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <nav className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
-        <Link href={`/trips/${id}`} className="text-stone-400 hover:text-stone-900 transition">
-          <ArrowLeft size={20} />
-        </Link>
-        <h1 className="text-xl font-bold tracking-tight">Troupe</h1>
-      </nav>
+      <TroupeHeader
+        showBack
+        backHref={`/trips/${id}`}
+        title={trip.name}
+        subtitle="Preferences"
+      />
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
         <div className="mb-8">

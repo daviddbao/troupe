@@ -1,7 +1,8 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Calendar, Map, Users, ArrowLeft, SlidersHorizontal } from 'lucide-react'
+import { Calendar, Map, Users, SlidersHorizontal } from 'lucide-react'
+import TroupeHeader from '@/components/layout/TroupeHeader'
 import InviteSection from '@/components/trips/InviteSection'
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
@@ -44,12 +45,10 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <nav className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
-        <Link href="/dashboard" className="text-stone-400 hover:text-stone-900 transition">
-          <ArrowLeft size={20} />
-        </Link>
-        <h1 className="text-xl font-bold tracking-tight">Troupe</h1>
-      </nav>
+      <TroupeHeader
+        showBack
+        backHref="/dashboard"
+      />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
 
@@ -106,7 +105,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
         </div>
 
         {/* Actions */}
-        <div className="grid sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid sm:grid-cols-4 gap-4 mb-8">
           <Link
             href={`/trips/${trip.id}/availability`}
             className="bg-white border border-stone-200 rounded-2xl p-6 hover:border-stone-400 hover:shadow-sm transition group"
@@ -126,6 +125,17 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
             <h3 className="font-semibold">Preferences</h3>
             <p className="text-sm text-stone-500 mt-1">
               Set trip length, budget, and vibe
+            </p>
+          </Link>
+
+          <Link
+            href={`/trips/${trip.id}/members`}
+            className="bg-white border border-stone-200 rounded-2xl p-6 hover:border-stone-400 hover:shadow-sm transition group"
+          >
+            <Users size={24} className="text-stone-400 mb-3" />
+            <h3 className="font-semibold">Members</h3>
+            <p className="text-sm text-stone-500 mt-1">
+              View and manage trip members
             </p>
           </Link>
 

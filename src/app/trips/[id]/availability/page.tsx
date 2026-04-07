@@ -1,7 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft } from 'lucide-react'
+import TroupeHeader from '@/components/layout/TroupeHeader'
 import { findOverlapWindows } from '@/lib/availability'
 import AvailabilityCalendar from '@/components/availability/AvailabilityCalendar'
 
@@ -36,15 +35,12 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <nav className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
-        <Link href={`/trips/${id}`} className="text-stone-400 hover:text-stone-900 transition">
-          <ArrowLeft size={20} />
-        </Link>
-        <div>
-          <h1 className="font-semibold">{trip.name}</h1>
-          <p className="text-xs text-stone-400">Availability</p>
-        </div>
-      </nav>
+      <TroupeHeader
+        showBack
+        backHref={`/trips/${id}`}
+        title={trip.name}
+        subtitle="Availability"
+      />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <div className="mb-8">
@@ -88,6 +84,8 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
           userId={user.id}
           existingBlocks={blocks ?? []}
           members={members ?? []}
+          tripStartDate={trip.start_date}
+          tripEndDate={trip.end_date}
         />
       </main>
     </div>

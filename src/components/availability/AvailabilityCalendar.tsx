@@ -3,14 +3,16 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AvailabilityBlock, AvailabilityType } from '@/lib/types'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday, isSameDay } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday, isSameDay, parseISO } from 'date-fns'
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Props {
   tripId: string
   userId: string
   existingBlocks: AvailabilityBlock[]
-  members: unknown[]
+  members: Array<{ user_id: string; profile: { full_name: string | null } | null }>
+  tripStartDate?: string | null
+  tripEndDate?: string | null
 }
 
 // US holiday long weekends only — shown for America/* timezones
@@ -30,7 +32,7 @@ function isUSTimezone(): boolean {
   catch { return false }
 }
 
-export default function AvailabilityCalendar({ tripId, userId, existingBlocks }: Props) {
+export default function AvailabilityCalendar({ tripId, userId, existingBlocks, members, tripStartDate, tripEndDate }: Props) {
   const router = useRouter()
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [blocks, setBlocks] = useState<AvailabilityBlock[]>(existingBlocks)
@@ -41,6 +43,7 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
   const [justSaved, setJustSaved] = useState(false)
   const [tooltipDate, setTooltipDate] = useState<Date | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [showLegend, setShowLegend] = useState(false)
   const showChips = isUSTimezone()
 
   // Auto-hide toast after 2.5s
@@ -51,6 +54,13 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
   }, [])
 
   const myBlocks = blocks.filter(b => b.user_id === userId)
+
+  // Get other members' blocks
+  const otherMemberIds = members.filter(m => m.user_id !== userId).map(m => m.user_id)
+  const memberNames: Record<string, string> = {}
+  members.forEach(m => {
+    memberNames[m.user_id] = m.profile?.full_name || m.user_id.slice(0, 8)
+  })
 
   function getStatus(date: Date): AvailabilityType | null {
     const ds = format(date, 'yyyy-MM-dd')
@@ -127,11 +137,28 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
   const startPad = getDay(monthStart)
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-  // Filter future holidays
+  // Filter holidays based on trip date range or current month
   const today = new Date()
+  let tripStart: Date | null = null
+  let tripEnd: Date | null = null
+
+  if (tripStartDate && tripEndDate) {
+    tripStart = parseISO(tripStartDate)
+    tripEnd = parseISO(tripEndDate)
+  }
+
   const futureHolidays = HOLIDAY_CHIPS.filter(chip => {
+    // If trip has date range, only show holidays within that range
+    if (tripStart && tripEnd) {
+      return chip.dates.some(d => {
+        const holidayDate = parseISO(d)
+        return holidayDate >= tripStart && holidayDate <= tripEnd
+      })
+    }
+    // Otherwise, only show holidays future from today and potentially in current/next month
+    const firstDate = new Date(chip.dates[0])
     const lastDate = new Date(chip.dates[chip.dates.length - 1])
-    return lastDate >= today
+    return lastDate >= today && firstDate.getMonth() === currentMonth.getMonth() || lastDate.getMonth() === currentMonth.getMonth()
   })
 
   return (
@@ -231,10 +258,24 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
             const inPreview = isInPreview(day)
             const isStart = !!(rangeStart && isSameDay(day, rangeStart))
 
+            // Count other members available
+            const ds = format(day, 'yyyy-MM-dd')
+            const otherAvailableMembers = otherMemberIds.filter(uid => {
+              return blocks.some(b => b.user_id === uid && ds >= b.start_date && ds <= b.end_date && b.type === 'available')
+            })
+
             let bg = 'hover:bg-stone-100 text-stone-700'
             if (status === 'available' || status === 'preferred') bg = 'bg-green-200 text-green-900 font-semibold'
             if (status === 'unavailable') bg = 'bg-red-100 text-red-400'
             if (inPreview && !status) bg = mode === 'available' ? 'bg-green-100 text-green-700' : mode === 'unavailable' ? 'bg-red-50 text-red-400' : 'hover:bg-stone-100'
+
+            // Add overlay for other members' availability
+            let overlay = ''
+            if (status === null && otherAvailableMembers.length > 0 && otherAvailableMembers.length < otherMemberIds.length) {
+              overlay = 'bg-gradient-to-t from-blue-50'
+            } else if (status === null && otherAvailableMembers.length === otherMemberIds.length && otherMemberIds.length > 0) {
+              overlay = 'bg-gradient-to-t from-blue-100'
+            }
 
             return (
               <div key={day.toISOString()} className="relative overflow-visible">
@@ -255,13 +296,19 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
                     setTooltipDate(null)
                   }}
                   className={[
-                    'min-h-[2.25rem] w-full rounded-lg text-sm flex items-center justify-center transition',
+                    'min-h-[2.25rem] w-full rounded-lg text-sm flex flex-col items-center justify-center transition relative',
                     isToday(day) ? 'ring-2 ring-stone-300' : '',
                     isStart ? 'ring-2 ring-blue-400' : '',
                     bg
                   ].join(' ')}
                 >
-                  {format(day, 'd')}
+                  {overlay && <div className={`absolute inset-0 rounded-lg pointer-events-none opacity-60 ${overlay}`} />}
+                  <span className="relative z-10">{format(day, 'd')}</span>
+                  {status === null && otherAvailableMembers.length > 0 && (
+                    <span className="text-xs relative z-10 font-medium text-blue-600">
+                      +{otherAvailableMembers.length}
+                    </span>
+                  )}
                 </button>
               </div>
             )
@@ -271,16 +318,39 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks }:
         {saving && <p className="text-xs text-stone-400 mt-4 text-center animate-pulse">Saving…</p>}
 
         {/* Legend */}
-        <div className="flex gap-4 mt-5 pt-4 border-t border-stone-100 flex-wrap">
-          <div className="flex items-center gap-1.5 text-xs text-stone-500">
-            <div className="w-3 h-3 rounded bg-green-200" /> Available
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-stone-500">
-            <div className="w-3 h-3 rounded bg-red-100" /> Busy
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-stone-500">
-            <div className="w-3 h-3 rounded ring-2 ring-stone-300 bg-white" /> Today
-          </div>
+        <div className="mt-5 pt-4 border-t border-stone-100">
+          <button
+            type="button"
+            onClick={() => setShowLegend(!showLegend)}
+            className="text-xs text-stone-500 hover:text-stone-700 font-medium mb-2"
+          >
+            {showLegend ? '▼ Legend' : '▶ Legend'}
+          </button>
+          {showLegend && (
+            <div className="space-y-2 pl-4">
+              <div className="flex gap-4 flex-wrap">
+                <div className="flex items-center gap-1.5 text-xs text-stone-500">
+                  <div className="w-3 h-3 rounded bg-green-200" /> Your availability
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-stone-500">
+                  <div className="w-3 h-3 rounded bg-red-100" /> You're busy
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-stone-500">
+                  <div className="w-3 h-3 rounded ring-2 ring-stone-300 bg-white" /> Today
+                </div>
+              </div>
+              {members.length > 1 && (
+                <div className="space-y-1 mt-3 text-xs">
+                  <p className="text-stone-600 font-medium">Members:</p>
+                  {members.map(m => (
+                    <div key={m.user_id} className="text-stone-500">
+                      {memberNames[m.user_id]}{m.user_id === userId ? ' (you)' : ''}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
