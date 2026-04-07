@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AvailabilityBlock, AvailabilityType } from '@/lib/types'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday, isSameDay, parseISO } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday, isSameDay } from 'date-fns'
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Props {

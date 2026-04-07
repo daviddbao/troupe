@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Calendar, Map, Users, ArrowLeft, CheckCircle2, SlidersHorizontal } from 'lucide-react'
+import { Calendar, Map, Users, ArrowLeft, SlidersHorizontal } from 'lucide-react'
 import InviteSection from '@/components/trips/InviteSection'
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
@@ -41,7 +41,6 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
 
   const memberCount = members?.length ?? 0
   const respondedCount = new Set(availBlocks?.map(b => b.user_id) ?? []).size
-  const userHasAvailability = availBlocks?.some(b => b.user_id === user.id) ?? false
 
   return (
     <div className="min-h-screen bg-stone-50">

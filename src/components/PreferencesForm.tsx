@@ -3,9 +3,17 @@ import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Check } from 'lucide-react'
 
+interface Preferences {
+  nights?: number
+  pto_days?: number
+  geography?: string
+  weather?: string
+  notes?: string
+}
+
 interface PreferencesFormProps {
   tripId: string
-  initialPreferences: any
+  initialPreferences: Preferences
 }
 
 const weatherOptions = [
