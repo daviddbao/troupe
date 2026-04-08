@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AvailabilityBlock, AvailabilityType } from '@/lib/types'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday, isSameDay, parseISO } from 'date-fns'
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, Check, Clock } from 'lucide-react'
 
 interface Props {
   tripId: string
@@ -14,6 +14,9 @@ interface Props {
   tripStartDate?: string | null
   tripEndDate?: string | null
 }
+
+// Member color palette
+const MEMBER_COLOR_PALETTE = ['#3B82F6','#F59E0B','#10B981','#8B5CF6','#EF4444','#06B6D4','#F97316','#EC4899']
 
 // US holiday long weekends only — shown for America/* timezones
 const HOLIDAY_CHIPS = [
@@ -43,7 +46,6 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
   const [justSaved, setJustSaved] = useState(false)
   const [tooltipDate, setTooltipDate] = useState<Date | null>(null)
   const [toast, setToast] = useState<string | null>(null)
-  const [showLegend, setShowLegend] = useState(false)
   const showChips = isUSTimezone()
 
   // Auto-hide toast after 2.5s
@@ -55,12 +57,32 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
 
   const myBlocks = blocks.filter(b => b.user_id === userId)
 
-  // Get other members' blocks
+  // Assign colors to members: current user always gets index 0 (blue)
+  const memberColorMap: Record<string, string> = {}
+  let colorIndex = 0
+
+  // First assign to current user
+  memberColorMap[userId] = MEMBER_COLOR_PALETTE[0]
+  colorIndex = 1
+
+  // Then assign to other members
+  members.forEach(m => {
+    if (m.user_id !== userId && !(m.user_id in memberColorMap)) {
+      memberColorMap[m.user_id] = MEMBER_COLOR_PALETTE[colorIndex % MEMBER_COLOR_PALETTE.length]
+      colorIndex++
+    }
+  })
+
+  // Get other members' blocks and member info
   const otherMemberIds = members.filter(m => m.user_id !== userId).map(m => m.user_id)
   const memberNames: Record<string, string> = {}
   members.forEach(m => {
     memberNames[m.user_id] = m.profile?.full_name || m.user_id.slice(0, 8)
   })
+
+  // Check who has responded (has any blocks submitted)
+  const respondedMembers = new Set(blocks.map(b => b.user_id))
+  const pendingMembers = members.filter(m => !respondedMembers.has(m.user_id))
 
   function getStatus(date: Date): AvailabilityType | null {
     const ds = format(date, 'yyyy-MM-dd')
@@ -73,6 +95,77 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
     const a = rangeStart <= hoverDate ? rangeStart : hoverDate
     const b = rangeStart <= hoverDate ? hoverDate : rangeStart
     return date >= a && date <= b
+  }
+
+  // Get members who marked a specific date as available
+  function getAvailableMembersForDate(date: Date): string[] {
+    const ds = format(date, 'yyyy-MM-dd')
+    return members
+      .map(m => m.user_id)
+      .filter(uid => blocks.some(b => b.user_id === uid && ds >= b.start_date && ds <= b.end_date && b.type === 'available'))
+  }
+
+  // Find overlap windows
+  function findOverlapWindows(): Array<{ start: string; end: string; memberCount: number }> {
+    if (otherMemberIds.length === 0) return []
+
+    const allDates = new Set<string>()
+    blocks.forEach(b => {
+      if (b.type === 'available') {
+        let current = parseISO(b.start_date)
+        const end = parseISO(b.end_date)
+        while (current <= end) {
+          allDates.add(format(current, 'yyyy-MM-dd'))
+          current = new Date(current.getTime() + 86400000)
+        }
+      }
+    })
+
+    if (allDates.size === 0) return []
+
+    const sortedDates = Array.from(allDates).sort()
+    const windows: Array<{ start: string; end: string; memberCount: number }> = []
+    let windowStart = sortedDates[0]
+    let windowEnd = sortedDates[0]
+
+    for (let i = 1; i < sortedDates.length; i++) {
+      const current = parseISO(sortedDates[i])
+      const prev = parseISO(sortedDates[i - 1])
+      const daysDiff = Math.floor((current.getTime() - prev.getTime()) / 86400000)
+
+      if (daysDiff === 1) {
+        windowEnd = sortedDates[i]
+      } else {
+        const availableCounts = []
+        let checkDate = parseISO(windowStart)
+        const checkEnd = parseISO(windowEnd)
+        while (checkDate <= checkEnd) {
+          availableCounts.push(getAvailableMembersForDate(checkDate).length)
+          checkDate = new Date(checkDate.getTime() + 86400000)
+        }
+        const minCount = Math.min(...availableCounts)
+        if (minCount >= 2) {
+          windows.push({ start: windowStart, end: windowEnd, memberCount: minCount })
+        }
+        windowStart = sortedDates[i]
+        windowEnd = sortedDates[i]
+      }
+    }
+
+    // Handle last window
+    const availableCounts = []
+    let checkDate = parseISO(windowStart)
+    const checkEnd = parseISO(windowEnd)
+    while (checkDate <= checkEnd) {
+      availableCounts.push(getAvailableMembersForDate(checkDate).length)
+      checkDate = new Date(checkDate.getTime() + 86400000)
+    }
+    const minCount = Math.min(...availableCounts)
+    if (minCount >= 2) {
+      windows.push({ start: windowStart, end: windowEnd, memberCount: minCount })
+    }
+
+    return windows.slice(0, 5)
   }
 
   const saveRange = useCallback(async (start: Date, end: Date, type: AvailabilityType) => {
@@ -161,8 +254,32 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
     return lastDate >= today && firstDate.getMonth() === currentMonth.getMonth() || lastDate.getMonth() === currentMonth.getMonth()
   })
 
+  const overlapWindows = findOverlapWindows()
+  const memberIds = members.map(m => m.user_id)
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+
+      {/* Overlap windows — only meaningful with 2+ members */}
+      {overlapWindows.length > 0 && members.length >= 2 && (
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
+          <h3 className="font-semibold text-green-800 mb-3">✨ Overlap windows found</h3>
+          <div className="space-y-2">
+            {overlapWindows.map((w, i) => (
+              <div key={i} className="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-green-100">
+                <span className="text-sm font-medium">
+                  {new Date(w.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {' — '}
+                  {new Date(w.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+                <span className="text-xs text-green-600 font-medium">
+                  {w.memberCount} of {memberIds.length} available
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Holiday chips */}
       {showChips && futureHolidays.length > 0 && (
@@ -197,7 +314,39 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
       )}
 
       {/* Calendar card */}
-      <div className="bg-white border border-stone-200 rounded-2xl p-4">
+      <div className="bg-white border border-stone-200 rounded-2xl p-6">
+
+        {/* Primary instruction */}
+        <p className="text-sm text-stone-600 mb-6">
+          <strong>Tap a date to mark yourself available.</strong> Tap again to remove.
+          {' '}
+          <span className="text-stone-400">Or tap start + end date for a range.</span>
+        </p>
+
+        {/* Responses section */}
+        {members.length > 1 && (
+          <div className="mb-6">
+            <p className="text-xs text-stone-500 font-medium mb-3">Responses</p>
+            <div className="flex flex-wrap gap-2">
+              {members.map(m => {
+                const hasBlocks = blocks.some(b => b.user_id === m.user_id)
+                return (
+                  <div
+                    key={m.user_id}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-stone-50 border border-stone-200"
+                  >
+                    <span className="text-sm">{memberNames[m.user_id]}</span>
+                    {hasBlocks ? (
+                      <Check size={14} className="text-green-600" />
+                    ) : (
+                      <Clock size={14} className="text-stone-400" />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Mode toggle */}
         <div className="flex items-center gap-3 mb-6 flex-wrap gap-y-2">
@@ -225,9 +374,6 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
               🗑️ Erase
             </button>
           </div>
-          <span className="ml-auto text-xs text-stone-400">
-            {mode === 'erase' ? 'Tap to remove' : rangeStart ? 'Now click end date' : 'Click start, then end'}
-          </span>
         </div>
 
         {/* Month nav */}
@@ -257,25 +403,17 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
             const status = getStatus(day)
             const inPreview = isInPreview(day)
             const isStart = !!(rangeStart && isSameDay(day, rangeStart))
-
-            // Count other members available
             const ds = format(day, 'yyyy-MM-dd')
-            const otherAvailableMembers = otherMemberIds.filter(uid => {
-              return blocks.some(b => b.user_id === uid && ds >= b.start_date && ds <= b.end_date && b.type === 'available')
-            })
 
-            let bg = 'hover:bg-stone-100 text-stone-700'
+            // Get all members available on this day
+            const availableMembers = getAvailableMembersForDate(day)
+            const isFullOverlap = availableMembers.length === members.length && members.length >= 2
+
+            // Background based on current user's status
+            let bg = 'bg-white hover:bg-stone-50 text-stone-700'
             if (status === 'available' || status === 'preferred') bg = 'bg-green-200 text-green-900 font-semibold'
             if (status === 'unavailable') bg = 'bg-red-100 text-red-400'
-            if (inPreview && !status) bg = mode === 'available' ? 'bg-green-100 text-green-700' : mode === 'unavailable' ? 'bg-red-50 text-red-400' : 'hover:bg-stone-100'
-
-            // Add overlay for other members' availability
-            let overlay = ''
-            if (status === null && otherAvailableMembers.length > 0 && otherAvailableMembers.length < otherMemberIds.length) {
-              overlay = 'bg-gradient-to-t from-blue-50'
-            } else if (status === null && otherAvailableMembers.length === otherMemberIds.length && otherMemberIds.length > 0) {
-              overlay = 'bg-gradient-to-t from-blue-100'
-            }
+            if (inPreview && !status) bg = mode === 'available' ? 'bg-green-100 text-green-700' : mode === 'unavailable' ? 'bg-red-50 text-red-400' : 'bg-white hover:bg-stone-50'
 
             return (
               <div key={day.toISOString()} className="relative overflow-visible">
@@ -296,18 +434,26 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
                     setTooltipDate(null)
                   }}
                   className={[
-                    'min-h-[2.25rem] w-full rounded-lg text-sm flex flex-col items-center justify-center transition relative',
+                    'min-h-[2.5rem] w-full rounded-lg text-sm flex flex-col items-center justify-between p-1 transition relative',
                     isToday(day) ? 'ring-2 ring-stone-300' : '',
                     isStart ? 'ring-2 ring-blue-400' : '',
+                    isFullOverlap ? 'ring-2 ring-green-500 ring-offset-1' : '',
                     bg
                   ].join(' ')}
                 >
-                  {overlay && <div className={`absolute inset-0 rounded-lg pointer-events-none opacity-60 ${overlay}`} />}
-                  <span className="relative z-10">{format(day, 'd')}</span>
-                  {status === null && otherAvailableMembers.length > 0 && (
-                    <span className="text-xs relative z-10 font-medium text-blue-600">
-                      +{otherAvailableMembers.length}
-                    </span>
+                  <span className="relative z-10 text-center w-full">{format(day, 'd')}</span>
+                  {/* Colored dots for each member's availability */}
+                  {members.length > 1 && availableMembers.length > 0 && (
+                    <div className="flex gap-0.5 justify-center mt-0.5">
+                      {availableMembers.map(uid => (
+                        <div
+                          key={uid}
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: memberColorMap[uid] }}
+                          title={memberNames[uid]}
+                        />
+                      ))}
+                    </div>
                   )}
                 </button>
               </div>
@@ -317,47 +463,28 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
 
         {saving && <p className="text-xs text-stone-400 mt-4 text-center animate-pulse">Saving…</p>}
 
-        {/* Legend */}
-        <div className="mt-5 pt-4 border-t border-stone-100">
-          <button
-            type="button"
-            onClick={() => setShowLegend(!showLegend)}
-            className="text-xs text-stone-500 hover:text-stone-700 font-medium mb-2"
-          >
-            {showLegend ? '▼ Legend' : '▶ Legend'}
-          </button>
-          {showLegend && (
-            <div className="space-y-2 pl-4">
-              <div className="flex gap-4 flex-wrap">
-                <div className="flex items-center gap-1.5 text-xs text-stone-500">
-                  <div className="w-3 h-3 rounded bg-green-200" /> Your availability
+        {/* Always-visible legend */}
+        {members.length > 1 && (
+          <div className="mt-6 pt-6 border-t border-stone-100">
+            <p className="text-xs text-stone-500 font-medium mb-3">Member colors</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {members.map(m => (
+                <div key={m.user_id} className="flex items-center gap-2 text-sm text-stone-600">
+                  <div
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: memberColorMap[m.user_id] }}
+                  />
+                  <span>{memberNames[m.user_id]}{m.user_id === userId ? ' (you)' : ''}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-stone-500">
-                  <div className="w-3 h-3 rounded bg-red-100" /> You're busy
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-stone-500">
-                  <div className="w-3 h-3 rounded ring-2 ring-stone-300 bg-white" /> Today
-                </div>
-              </div>
-              {members.length > 1 && (
-                <div className="space-y-1 mt-3 text-xs">
-                  <p className="text-stone-600 font-medium">Members:</p>
-                  {members.map(m => (
-                    <div key={m.user_id} className="text-stone-500">
-                      {memberNames[m.user_id]}{m.user_id === userId ? ' (you)' : ''}
-                    </div>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-
 
       {/* Clear all my dates */}
       {myBlocks.length > 0 && (
-        <div className="text-center mt-2">
+        <div className="text-center">
           <button
             type="button"
             onClick={async () => {
