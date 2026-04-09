@@ -18,21 +18,126 @@ interface Props {
 // Member color palette
 const MEMBER_COLOR_PALETTE = ['#3B82F6','#F59E0B','#10B981','#8B5CF6','#EF4444','#06B6D4','#F97316','#EC4899']
 
-// US holiday long weekends only — shown for America/* timezones
-const HOLIDAY_CHIPS = [
-  { label: 'Memorial Day', emoji: '🌸', dates: ['2026-05-23', '2026-05-24', '2026-05-25'] },
-  { label: 'Juneteenth', emoji: '🌟', dates: ['2026-06-19', '2026-06-20', '2026-06-21'] },
-  { label: '4th of July', emoji: '🎇', dates: ['2026-07-03', '2026-07-04', '2026-07-05', '2026-07-06'] },
-  { label: 'Labor Day', emoji: '🔨', dates: ['2026-09-04', '2026-09-05', '2026-09-06', '2026-09-07'] },
-  { label: 'Indigenous Peoples Day', emoji: '🧭', dates: ['2026-10-09', '2026-10-10', '2026-10-11', '2026-10-12'] },
-  { label: 'Veterans Day', emoji: '🎖️', dates: ['2026-11-11'] },
-  { label: 'Thanksgiving', emoji: '🦃', dates: ['2026-11-26', '2026-11-27', '2026-11-28', '2026-11-29'] },
-  { label: 'Christmas', emoji: '🎄', dates: ['2026-12-25', '2026-12-26', '2026-12-27', '2026-12-28'] },
-]
+// International holidays for 2025 and 2026
+const HOLIDAYS: Record<string, Array<{ date: string; name: string }>> = {
+  'US': [
+    { date: '2025-01-20', name: 'MLK Jr. Day' },
+    { date: '2025-02-17', name: 'Presidents Day' },
+    { date: '2025-05-26', name: 'Memorial Day' },
+    { date: '2025-06-19', name: 'Juneteenth' },
+    { date: '2025-07-04', name: '4th of July' },
+    { date: '2025-09-01', name: 'Labor Day' },
+    { date: '2025-10-13', name: 'Indigenous Peoples Day' },
+    { date: '2025-11-11', name: 'Veterans Day' },
+    { date: '2025-11-27', name: 'Thanksgiving' },
+    { date: '2025-12-25', name: 'Christmas' },
+    { date: '2026-01-19', name: 'MLK Jr. Day' },
+    { date: '2026-02-16', name: 'Presidents Day' },
+    { date: '2026-05-25', name: 'Memorial Day' },
+    { date: '2026-06-19', name: 'Juneteenth' },
+    { date: '2026-07-04', name: '4th of July' },
+    { date: '2026-09-07', name: 'Labor Day' },
+    { date: '2026-10-12', name: 'Indigenous Peoples Day' },
+    { date: '2026-11-11', name: 'Veterans Day' },
+    { date: '2026-11-26', name: 'Thanksgiving' },
+    { date: '2026-12-25', name: 'Christmas' },
+  ],
+  'UK': [
+    { date: '2025-01-01', name: 'New Year' },
+    { date: '2025-04-18', name: 'Good Friday' },
+    { date: '2025-04-21', name: 'Easter Monday' },
+    { date: '2025-05-05', name: 'Early May Bank' },
+    { date: '2025-05-26', name: 'Spring Bank' },
+    { date: '2025-08-25', name: 'Summer Bank' },
+    { date: '2025-12-25', name: 'Christmas' },
+    { date: '2025-12-26', name: 'Boxing Day' },
+    { date: '2026-01-01', name: 'New Year' },
+    { date: '2026-04-10', name: 'Good Friday' },
+    { date: '2026-04-13', name: 'Easter Monday' },
+    { date: '2026-05-04', name: 'Early May Bank' },
+    { date: '2026-05-25', name: 'Spring Bank' },
+    { date: '2026-08-31', name: 'Summer Bank' },
+    { date: '2026-12-25', name: 'Christmas' },
+    { date: '2026-12-26', name: 'Boxing Day' },
+  ],
+  'CA': [
+    { date: '2025-01-01', name: 'New Year' },
+    { date: '2025-02-17', name: 'Family Day' },
+    { date: '2025-04-18', name: 'Good Friday' },
+    { date: '2025-05-19', name: 'Victoria Day' },
+    { date: '2025-07-01', name: 'Canada Day' },
+    { date: '2025-08-04', name: 'Civic Holiday' },
+    { date: '2025-09-01', name: 'Labour Day' },
+    { date: '2025-12-25', name: 'Christmas' },
+    { date: '2026-01-01', name: 'New Year' },
+    { date: '2026-02-16', name: 'Family Day' },
+    { date: '2026-04-10', name: 'Good Friday' },
+    { date: '2026-05-18', name: 'Victoria Day' },
+    { date: '2026-07-01', name: 'Canada Day' },
+    { date: '2026-08-03', name: 'Civic Holiday' },
+    { date: '2026-09-07', name: 'Labour Day' },
+    { date: '2026-12-25', name: 'Christmas' },
+  ],
+  'AU': [
+    { date: '2025-01-01', name: 'New Year' },
+    { date: '2025-01-27', name: 'Australia Day' },
+    { date: '2025-04-18', name: 'Good Friday' },
+    { date: '2025-04-25', name: 'ANZAC Day' },
+    { date: '2025-06-09', name: 'Queen\'s Birthday' },
+    { date: '2025-12-25', name: 'Christmas' },
+    { date: '2025-12-26', name: 'Boxing Day' },
+    { date: '2026-01-01', name: 'New Year' },
+    { date: '2026-01-26', name: 'Australia Day' },
+    { date: '2026-04-10', name: 'Good Friday' },
+    { date: '2026-04-25', name: 'ANZAC Day' },
+    { date: '2026-06-08', name: 'Queen\'s Birthday' },
+    { date: '2026-12-25', name: 'Christmas' },
+    { date: '2026-12-26', name: 'Boxing Day' },
+  ],
+  'JP': [
+    { date: '2025-01-01', name: 'New Year' },
+    { date: '2025-01-13', name: 'Coming of Age' },
+    { date: '2025-02-11', name: 'National Foundation' },
+    { date: '2025-03-20', name: 'Vernal Equinox' },
+    { date: '2025-04-29', name: 'Showa Day' },
+    { date: '2025-05-03', name: 'Constitution Day' },
+    { date: '2025-05-05', name: 'Children\'s Day' },
+    { date: '2025-07-21', name: 'Marine Day' },
+    { date: '2025-08-11', name: 'Mountain Day' },
+    { date: '2025-09-15', name: 'Respect for Aged' },
+    { date: '2025-09-22', name: 'Autumnal Equinox' },
+    { date: '2025-10-13', name: 'Health & Sports' },
+    { date: '2025-11-03', name: 'Culture Day' },
+    { date: '2025-11-23', name: 'Labor Thanksgiving' },
+    { date: '2026-01-01', name: 'New Year' },
+    { date: '2026-01-12', name: 'Coming of Age' },
+    { date: '2026-02-11', name: 'National Foundation' },
+    { date: '2026-03-20', name: 'Vernal Equinox' },
+    { date: '2026-04-29', name: 'Showa Day' },
+    { date: '2026-05-03', name: 'Constitution Day' },
+    { date: '2026-05-05', name: 'Children\'s Day' },
+    { date: '2026-07-20', name: 'Marine Day' },
+    { date: '2026-08-11', name: 'Mountain Day' },
+    { date: '2026-09-21', name: 'Respect for Aged' },
+    { date: '2026-09-22', name: 'Autumnal Equinox' },
+    { date: '2026-10-12', name: 'Health & Sports' },
+    { date: '2026-11-03', name: 'Culture Day' },
+    { date: '2026-11-23', name: 'Labor Thanksgiving' },
+  ],
+}
 
-function isUSTimezone(): boolean {
-  try { return Intl.DateTimeFormat().resolvedOptions().timeZone.startsWith('America/') }
-  catch { return false }
+function getDefaultCountry(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (tz.startsWith('America/')) return 'US'
+    if (tz.startsWith('Europe/London') || tz === 'GMT') return 'UK'
+    if (tz.startsWith('America/Toronto') || tz.startsWith('America/Vancouver')) return 'CA'
+    if (tz.startsWith('Australia/')) return 'AU'
+    if (tz.startsWith('Asia/Tokyo')) return 'JP'
+    return 'US'
+  } catch {
+    return 'US'
+  }
 }
 
 export default function AvailabilityCalendar({ tripId, userId, existingBlocks, members, tripStartDate, tripEndDate }: Props) {
@@ -46,7 +151,7 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
   const [justSaved, setJustSaved] = useState(false)
   const [tooltipDate, setTooltipDate] = useState<Date | null>(null)
   const [toast, setToast] = useState<string | null>(null)
-  const showChips = isUSTimezone()
+  const [holidayCountry, setHolidayCountry] = useState<string>(getDefaultCountry())
 
   // Auto-hide toast after 2.5s
   const showToast = useCallback((message: string) => {
@@ -230,6 +335,9 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
   const startPad = getDay(monthStart)
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+  // Get current country's holidays
+  const countryHolidays = holidayCountry !== 'None' ? (HOLIDAYS[holidayCountry] || []) : []
+
   // Filter holidays based on trip date range or current month
   const today = new Date()
   let tripStart: Date | null = null
@@ -240,18 +348,16 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
     tripEnd = parseISO(tripEndDate)
   }
 
-  const futureHolidays = HOLIDAY_CHIPS.filter(chip => {
+  const displayHolidays = countryHolidays.filter(holiday => {
+    const holidayDate = parseISO(holiday.date)
+
     // If trip has date range, only show holidays within that range
     if (tripStart && tripEnd) {
-      return chip.dates.some(d => {
-        const holidayDate = parseISO(d)
-        return holidayDate >= tripStart && holidayDate <= tripEnd
-      })
+      return holidayDate >= tripStart && holidayDate <= tripEnd
     }
-    // Otherwise, only show holidays future from today and potentially in current/next month
-    const firstDate = new Date(chip.dates[0])
-    const lastDate = new Date(chip.dates[chip.dates.length - 1])
-    return lastDate >= today && firstDate.getMonth() === currentMonth.getMonth() || lastDate.getMonth() === currentMonth.getMonth()
+
+    // Otherwise, show holidays in current month
+    return holidayDate.getMonth() === currentMonth.getMonth() && holidayDate >= today
   })
 
   const overlapWindows = findOverlapWindows()
@@ -281,31 +387,46 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
         </div>
       )}
 
-      {/* Holiday chips */}
-      {showChips && futureHolidays.length > 0 && (
+      {/* Holiday selector and chips */}
+      {displayHolidays.length > 0 && (
         <div>
-          <p className="text-xs text-stone-400 mb-2 font-medium uppercase tracking-wide">Quick-add a holiday weekend</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-stone-400 font-medium uppercase tracking-wide">Mark holidays as available</p>
+            <select
+              value={holidayCountry}
+              onChange={(e) => setHolidayCountry(e.target.value)}
+              className="text-xs px-2 py-1 rounded border border-stone-200 bg-white text-stone-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="US">🇺🇸 US</option>
+              <option value="UK">🇬🇧 UK</option>
+              <option value="CA">🇨🇦 Canada</option>
+              <option value="AU">🇦🇺 Australia</option>
+              <option value="JP">🇯🇵 Japan</option>
+              <option value="None">None</option>
+            </select>
+          </div>
           <div className="flex flex-nowrap overflow-x-auto sm:flex-wrap gap-2 pb-2 sm:pb-0">
-            {futureHolidays.map(chip => {
-              const added = chip.dates.every(d =>
-                myBlocks.some(b => d >= b.start_date && d <= b.end_date && b.type === 'available')
-              )
+            {displayHolidays.map(holiday => {
+              const isAdded = myBlocks.some(b => b.start_date === holiday.date && b.end_date === holiday.date && b.type === 'available')
               return (
                 <button
-                  key={chip.label}
-                  onClick={() => { if (!added) handleChip(chip.dates, chip.label) }}
-                  disabled={saving || added}
+                  key={holiday.date}
+                  onClick={() => {
+                    if (!isAdded) {
+                      handleChip([holiday.date], holiday.name)
+                    }
+                  }}
+                  disabled={saving || isAdded}
                   className={[
                     'flex items-center gap-1.5 px-3 py-2 rounded-full text-sm border transition shrink-0',
-                    added
+                    isAdded
                       ? 'bg-green-50 border-green-200 text-green-700 cursor-default'
                       : 'bg-white border-stone-200 text-stone-700 hover:border-stone-400 hover:shadow-sm',
                     'disabled:opacity-60'
                   ].join(' ')}
                 >
-                  <span>{chip.emoji}</span>
-                  <span>{chip.label}</span>
-                  {added && <span className="text-green-500 text-xs">✓</span>}
+                  <span>{holiday.name}</span>
+                  {isAdded && <span className="text-green-500 text-xs">✓</span>}
                 </button>
               )
             })}

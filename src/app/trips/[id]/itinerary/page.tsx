@@ -37,7 +37,7 @@ export default async function ItineraryPage({ params }: { params: Promise<{ id: 
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-1">Trip itinerary</h2>
           <p className="text-stone-500 text-sm">
-            {trip.start_date
+            {trip.start_date && trip.end_date
               ? `${new Date(trip.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} — ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
               : 'Dates not confirmed yet — add items by day'}
           </p>

@@ -1,9 +1,11 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Calendar, Map, Users, SlidersHorizontal } from 'lucide-react'
+import { Calendar, Map, Users, SlidersHorizontal, ChevronDown } from 'lucide-react'
 import TroupeHeader from '@/components/layout/TroupeHeader'
 import InviteSection from '@/components/trips/InviteSection'
+import TripDateEditor from '@/components/trips/TripDateEditor'
+import TripSuggestions from '@/components/trips/TripSuggestions'
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -75,6 +77,16 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
           )}
         </div>
 
+        {/* Trip date editor */}
+        <div className="mb-8">
+          <TripDateEditor
+            tripId={trip.id}
+            startDate={trip.start_date}
+            endDate={trip.end_date}
+            isAdmin={membership.role === 'organizer'}
+          />
+        </div>
+
         {/* Status cards */}
         <div className="grid sm:grid-cols-2 gap-4 mb-8">
           <div className="bg-white border border-stone-200 rounded-2xl p-5">
@@ -102,6 +114,11 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
               <p className="text-stone-400 text-sm">TBD — add availability to find windows</p>
             )}
           </div>
+        </div>
+
+        {/* Trip suggestions */}
+        <div className="mb-8">
+          <TripSuggestions preferences={trip.preferences} />
         </div>
 
         {/* Actions */}
