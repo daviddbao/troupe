@@ -185,10 +185,6 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
     memberNames[m.user_id] = m.profile?.full_name || m.user_id.slice(0, 8)
   })
 
-  // Check who has responded (has any blocks submitted)
-  const respondedMembers = new Set(blocks.map(b => b.user_id))
-  const pendingMembers = members.filter(m => !respondedMembers.has(m.user_id))
-
   function getStatus(date: Date): AvailabilityType | null {
     const ds = format(date, 'yyyy-MM-dd')
     const block = myBlocks.find(b => ds >= b.start_date && ds <= b.end_date)
@@ -524,7 +520,6 @@ export default function AvailabilityCalendar({ tripId, userId, existingBlocks, m
             const status = getStatus(day)
             const inPreview = isInPreview(day)
             const isStart = !!(rangeStart && isSameDay(day, rangeStart))
-            const ds = format(day, 'yyyy-MM-dd')
 
             // Get all members available on this day
             const availableMembers = getAvailableMembersForDate(day)

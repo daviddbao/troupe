@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Calendar, Map, Users, SlidersHorizontal, ChevronDown } from 'lucide-react'
+import { Calendar, Map, Users, SlidersHorizontal } from 'lucide-react'
 import TroupeHeader from '@/components/layout/TroupeHeader'
 import InviteSection from '@/components/trips/InviteSection'
 import TripDateEditor from '@/components/trips/TripDateEditor'

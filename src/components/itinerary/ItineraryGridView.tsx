@@ -36,6 +36,42 @@ export default function ItineraryGridView({ tripId, userId, items: initialItems,
   })
   const [saving, setSaving] = useState(false)
 
+  const handleAddItem = useCallback(async () => {
+    if (!form.title.trim() || selectedSlot === null) return
+
+    setSaving(true)
+    const supabase = createClient()
+
+    const { data, error } = await supabase
+      .from('itinerary_items')
+      .insert({
+        trip_id: tripId,
+        day_index: selectedSlot.dayIndex,
+        title: form.title,
+        description: form.notes || null,
+        location: null,
+        start_time: form.startTime,
+        end_time: form.endTime,
+        category: 'activity',
+        created_by: userId,
+      })
+      .select()
+      .single()
+
+    if (!error && data) {
+      setItems(prev => [...prev, data])
+      setForm({ title: '', notes: '', type: 'Open', startTime: '09:00', endTime: '10:00' })
+      setSelectedSlot(null)
+    }
+    setSaving(false)
+  }, [selectedSlot, form, tripId, userId])
+
+  const handleDeleteItem = useCallback(async (id: string) => {
+    const supabase = createClient()
+    await supabase.from('itinerary_items').delete().eq('id', id)
+    setItems(prev => prev.filter(i => i.id !== id))
+  }, [])
+
   if (!startDate || !endDate) {
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
@@ -60,43 +96,6 @@ export default function ItineraryGridView({ tripId, userId, items: initialItems,
       return itemHour === hour
     })
   }
-
-  const handleAddItem = useCallback(async () => {
-    if (!form.title.trim() || selectedSlot === null) return
-
-    setSaving(true)
-    const supabase = createClient()
-    const currentDate = addDays(tripStartDate, selectedSlot.dayIndex)
-
-    const { data, error } = await supabase
-      .from('itinerary_items')
-      .insert({
-        trip_id: tripId,
-        day_index: selectedSlot.dayIndex,
-        title: form.title,
-        description: form.notes || null,
-        location: null,
-        start_time: form.startTime,
-        end_time: form.endTime,
-        category: 'activity',
-        created_by: userId,
-      })
-      .select()
-      .single()
-
-    if (!error && data) {
-      setItems(prev => [...prev, data])
-      setForm({ title: '', notes: '', type: 'Open', startTime: '09:00', endTime: '10:00' })
-      setSelectedSlot(null)
-    }
-    setSaving(false)
-  }, [selectedSlot, form, tripId, userId, tripStartDate])
-
-  const handleDeleteItem = useCallback(async (id: string) => {
-    const supabase = createClient()
-    await supabase.from('itinerary_items').delete().eq('id', id)
-    setItems(prev => prev.filter(i => i.id !== id))
-  }, [])
 
   return (
     <div className="space-y-6">

@@ -17,10 +17,16 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
     .from('trip_members').select('role').eq('trip_id', id).eq('user_id', user.id).single()
   if (!membership) redirect('/dashboard')
 
-  const { data: members } = await supabase
+  const { data: membersRaw } = await supabase
     .from('trip_members')
-    .select('user_id, profile:profiles(full_name)')
+    .select('user_id, profile:profiles(full_name, avatar_url)')
     .eq('trip_id', id)
+
+  // Transform the profile array to object
+  const members = membersRaw?.map(m => ({
+    user_id: m.user_id,
+    profile: Array.isArray(m.profile) && m.profile.length > 0 ? m.profile[0] : null
+  })) ?? []
 
   const { data: blocks } = await supabase
     .from('availability_blocks')
@@ -49,7 +55,7 @@ export default async function AvailabilityPage({ params }: { params: Promise<{ i
           tripId={id}
           userId={user.id}
           existingBlocks={blocks ?? []}
-          members={members ?? []}
+          members={members}
           tripStartDate={trip.start_date}
           tripEndDate={trip.end_date}
         />

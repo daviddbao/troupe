@@ -23,7 +23,7 @@ interface Props {
   isOrganizer: boolean
 }
 
-function getInitials(name: string | null, email: string | null): string {
+function getInitials(name: string | null | undefined, email: string | null): string {
   if (name) {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }

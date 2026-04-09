@@ -17,11 +17,20 @@ export default async function MembersPage({ params }: { params: Promise<{ id: st
     .from('trip_members').select('role').eq('trip_id', id).eq('user_id', user.id).single()
   if (!membership) redirect('/dashboard')
 
-  const { data: members } = await supabase
+  const { data: membersRaw } = await supabase
     .from('trip_members')
     .select('id, user_id, role, joined_at, profile:profiles(id, full_name, avatar_url, email)')
     .eq('trip_id', id)
     .order('joined_at', { ascending: true })
+
+  // Transform the profile array to object
+  const members = membersRaw?.map(m => ({
+    id: m.id,
+    user_id: m.user_id,
+    role: m.role,
+    joined_at: m.joined_at,
+    profile: Array.isArray(m.profile) && m.profile.length > 0 ? m.profile[0] : null
+  })) ?? []
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -43,7 +52,7 @@ export default async function MembersPage({ params }: { params: Promise<{ id: st
         <MembersView
           tripId={id}
           currentUserId={user.id}
-          members={members ?? []}
+          members={members}
           isOrganizer={membership.role === 'organizer'}
         />
       </main>

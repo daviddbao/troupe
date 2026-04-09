@@ -1,7 +1,7 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, X } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 
 interface Props {
   tripId: string
